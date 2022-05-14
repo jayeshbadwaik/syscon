@@ -26,7 +26,23 @@ fi
 SYSTEM_NAME=$1
 MOUNT_POINT=$2
 
-pacstrap -c $MOUNT_POINT base linux linux-lts linux-firmware
+
+# The original change of "-c" was used to save the download times when
+# installing archlinux from a host which already has all the packages.
+# This is not useful when one is installing from a live usb where all the
+# packages have to be downloaded anyway. The option, in that case requires big
+# diskspace which might not be available in a live/usb and cause the install
+# step to fail. Hence we check whether the diskname for the root of the
+# installer has a "fs" in the name or not. This indicates if there is a
+# "rootfs" or a "squashfs" type of filesystem. If it is so, then, we disable
+# the cache.
+fs=$(basename `df / | tail -1 | awk '{ print $1; }'`)
+if grep -q "$fs" /proc/partitions; then
+  pacstrap -c $MOUNT_POINT base linux linux-lts linux-firmware
+else
+  pacstrap $MOUNT_POINT base linux linux-lts linux-firmware
+fi
+
 genfstab -U $MOUNT_POINT >> $MOUNT_POINT/etc/fstab
 arch-chroot $MOUNT_POINT ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 arch-chroot $MOUNT_POINT hwclock --systohc
