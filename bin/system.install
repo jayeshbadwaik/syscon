@@ -36,7 +36,12 @@ $SCRIPT_DIR/disk.format $TARGET_DRIVE $PARTITION_PREFIX_TYPE
 $SCRIPT_DIR/disk.mount $TARGET_DRIVE $PARTITION_PREFIX_TYPE $MOUNT_POINT
 
 ORIGINAL_SWAP=$(swapon --show=NAME --raw --noheadings)
-slow_print_verbose swapoff $ORIGINAL_SWAP
+if [[ ! -z "$ORIGINAL_SWAP" ]]; then
+  slow_print_verbose swapoff $ORIGINAL_SWAP
+else
+  echo "No swap found, skipping swapoff"
+fi
+
 $SCRIPT_DIR/swap.setup $TARGET_DRIVE $PARTITION_PREFIX_TYPE
 
 $SCRIPT_DIR/base.install $SYSTEM_NAME $MOUNT_POINT
@@ -48,10 +53,10 @@ echo ""
 echo "Installation Process Completed"
 echo "Do you wish to unmount (recursively) $MOUNT_POINT?"
 select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) break;;
-        No ) exit 0;;
-    esac
+  case $yn in
+    Yes ) break;;
+    No ) exit 0;;
+  esac
 done
 echo "Unmounting $MOUNT_POINT"
 umount -R $MOUNT_POINT
